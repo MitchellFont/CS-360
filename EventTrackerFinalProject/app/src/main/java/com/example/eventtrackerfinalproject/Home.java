@@ -38,7 +38,7 @@ public class Home extends AppCompatActivity {
             @Override
             public void onClick(View view){
                 Intent intent = new Intent(Home.this, Add.class);
-                startActivityForResult(intent, REQUEST);       // deprecated use here
+                startActivityForResult(intent, REQUEST);
 
             }
         });
