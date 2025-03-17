@@ -3,7 +3,6 @@ package com.example.eventtrackerfinalproject;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -15,78 +14,80 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 
-public class Home extends AppCompatActivity {
+public class Home extends AppCompatActivity implements Custom.OnItemClickListener {
 
-    public static final int REQUEST = 1;
-    RecyclerView recyclerV;
-    FloatingActionButton addB;
-    Custom Adaptor;
-    MainDatabase db;
-    ArrayList<String> e_id, e_title, e_description, e_date, e_time;
+    private RecyclerView recyclerView;
+    private FloatingActionButton addButton;
+    private Custom adapter;
+    private MainDatabase db;
+    private ArrayList<Reminder> reminders;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        // build a recycler view to display events from db
-        recyclerV = findViewById(R.id.recyclerview);
-        addB = findViewById(R.id.add_new);
+        recyclerView = findViewById(R.id.recyclerview);
+        addButton = findViewById(R.id.add_new);
 
-        // action button to add event
-        addB.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                Intent intent = new Intent(Home.this, Add.class);
-                startActivityForResult(intent, REQUEST);
+        // Initialize database and reminders list
+        db = new MainDatabase(this);
+        reminders = new ArrayList<>();
 
-            }
-        });
-
-        //create arrays
-        db = new MainDatabase(Home.this);
-        e_id = new ArrayList<>();
-        e_title = new ArrayList<>();
-        e_description = new ArrayList<>();
-        e_date = new ArrayList<>();
-        e_time = new ArrayList<>();
-
-        //data to fill arrays
+        // Load data from database
         storeDataInArrays();
 
-        //this will build the rows
-        Adaptor = new Custom(Home.this, this, e_id, e_title,
-                e_description, e_date, e_time);
-        recyclerV.setAdapter(Adaptor);
-        recyclerV.setLayoutManager(new LinearLayoutManager(Home.this));
+        // Set up RecyclerView
+        adapter = new Custom(this, this, reminders, this);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        // Add new event
+        addButton.setOnClickListener(v -> {
+            Intent intent = new Intent(Home.this, Add.class);
+            startActivityForResult(intent, Constants.REQUEST_CODE_ADD);
+        });
     }
 
     @Override
-    protected void onActivityResult(int request, int result, @Nullable Intent data){
-        super.onActivityResult(request, result, data);
-        if(request == 1){
-            recreate();
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == Constants.REQUEST_CODE_ADD) {
+            recreate(); // Refresh the activity
         }
     }
 
-    //creates rws for the recycler
-    void storeDataInArrays(){
-        Cursor c = db.readAllData();
-        if(c.getCount() == 0){
+    private void storeDataInArrays() {
+        Cursor cursor = db.readAllData();
+        if (cursor.getCount() == 0) {
             Toast.makeText(this, "No data", Toast.LENGTH_SHORT).show();
-        }
-        else{
-            while (c.moveToNext()){
-                e_id.add(c.getString(0));
-                e_title.add(c.getString(1));
-                e_description.add(c.getString(2));
-                e_date.add(c.getString(3));
-                e_time.add(c.getString(4));
+        } else {
+            while (cursor.moveToNext()) {
+                reminders.add(new Reminder(
+                        cursor.getString(0),
+                        cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        cursor.getString(4)
+                ));
             }
         }
     }
-    void delete(){
 
+    @Override
+    public void onItemClick(int position) {
+        // Handle item click (if needed)
+    }
+
+    @Override
+    public void onEditClick(int position) {
+        Reminder reminder = reminders.get(position);
+        Intent intent = new Intent(this, Update.class);
+        intent.putExtra(Constants.EXTRA_ID, reminder.getId());
+        intent.putExtra(Constants.EXTRA_TITLE, reminder.getTitle());
+        intent.putExtra(Constants.EXTRA_DESCRIPTION, reminder.getDescription());
+        intent.putExtra(Constants.EXTRA_DATE, reminder.getDate());
+        intent.putExtra(Constants.EXTRA_TIME, reminder.getTime());
+        startActivityForResult(intent, Constants.REQUEST_CODE_UPDATE);
     }
 }
