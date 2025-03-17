@@ -1,13 +1,8 @@
 package com.example.eventtrackerfinalproject;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.AlarmManager;
 import android.app.DatePickerDialog;
-import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -18,235 +13,166 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 
 public class Update extends AppCompatActivity {
 
-    EditText titleIN, descriptionIN;
-    String id, title, description, date, time;
-    Button updateB, deleteB, timeB, dateB;
-    String alarm;
-    int notificationC;
+    private EditText titleInput, descriptionInput;
+    private Button updateButton, deleteButton, timeButton, dateButton;
+    private String id, title, description, date, time;
+    private ReminderManager reminderManager;
+    private MainDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_update);
 
-        // id for buttons
-        titleIN = findViewById(R.id.title_input_update);
-        descriptionIN = findViewById(R.id.description_input_update);
-        dateB = findViewById(R.id.btn_Date_Update);
-        timeB = findViewById(R.id.btn_Time_Update);
-        updateB = findViewById(R.id.add_new_update);
-        deleteB = findViewById(R.id.edit_button);
+        // Initialize views
+        initViews();
 
-        //date and time input
-        timeB.setOnClickListener(view -> {selectTime();});
-        dateB.setOnClickListener(view -> selectDate());
+        // Initialize helpers
+        reminderManager = new ReminderManager(this);
+        db = new MainDatabase(this);
 
-        //disable update
-        titleIN.addTextChangedListener(textWatcher);
-        descriptionIN.addTextChangedListener(textWatcher);
-        timeB.addTextChangedListener(textWatcher);
-        dateB.addTextChangedListener(textWatcher);
+        // Set up listeners
+        setupListeners();
 
-        //get data
+        // Get and set intent data
         getAndSetIntentData();
+    }
 
-        //update event button
-        updateB.setOnClickListener(view -> {
+    private void initViews() {
+        titleInput = findViewById(R.id.title_input_update);
+        descriptionInput = findViewById(R.id.description_input_update);
+        dateButton = findViewById(R.id.btn_Date_Update);
+        timeButton = findViewById(R.id.btn_Time_Update);
+        updateButton = findViewById(R.id.add_new_update);
+        deleteButton = findViewById(R.id.edit_button);
+    }
 
-            MainDatabase db = new MainDatabase(Update.this);
-            db.updateData(id, titleIN.getText().toString().trim(),
-                    descriptionIN.getText().toString().trim(),
-                    dateB.getText().toString().trim(),
-                    timeB.getText().toString().trim());
+    private void setupListeners() {
+        // Date and time pickers
+        timeButton.setOnClickListener(v -> selectTime());
+        dateButton.setOnClickListener(v -> selectDate());
 
-            // set alarm
-            if (ContextCompat.checkSelfPermission(Update.this,
-                    Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED){
-                try {
-                    setAlarm(titleIN.getText().toString().trim(),
-                            descriptionIN.getText().toString().trim(),
-                            dateB.getText().toString().trim(),
-                            timeB.getText().toString().trim());
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-            } else{
-                Toast.makeText(Update.this, "For this feature you need to give permission",
-                        Toast.LENGTH_SHORT).show();
+        // Text watchers to enable/disable update button
+        TextWatcher textWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                validateInputs();
             }
 
-            finish();
+            @Override
+            public void afterTextChanged(Editable editable) {}
+        };
+        titleInput.addTextChangedListener(textWatcher);
+        descriptionInput.addTextChangedListener(textWatcher);
+        dateButton.addTextChangedListener(textWatcher);
+        timeButton.addTextChangedListener(textWatcher);
 
-        });
-        deleteB.setOnClickListener(view -> confirmDialog());
+        // Update event
+        updateButton.setOnClickListener(v -> updateEvent());
 
+        // Delete event
+        deleteButton.setOnClickListener(v -> confirmDelete());
     }
 
-    //makes sure everything is filled
-    private final TextWatcher textWatcher = new TextWatcher() {
-        @Override
-        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+    private void getAndSetIntentData() {
+        Intent intent = getIntent();
+        if (intent.hasExtra(Constants.EXTRA_ID) && intent.hasExtra(Constants.EXTRA_TITLE) &&
+            intent.hasExtra(Constants.EXTRA_DESCRIPTION) && intent.hasExtra(Constants.EXTRA_DATE) &&
+            intent.hasExtra(Constants.EXTRA_TIME)) {
 
-        }
+            // Get data from intent
+            id = intent.getStringExtra(Constants.EXTRA_ID);
+            title = intent.getStringExtra(Constants.EXTRA_TITLE);
+            description = intent.getStringExtra(Constants.EXTRA_DESCRIPTION);
+            date = intent.getStringExtra(Constants.EXTRA_DATE);
+            time = intent.getStringExtra(Constants.EXTRA_TIME);
 
-        @Override
-        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            String date = dateB.getText().toString().trim();
-            String time = timeB.getText().toString().trim();
-            String title = titleIN.getText().toString().trim();
-            String description = descriptionIN.getText().toString().trim();
-
-            updateB.setEnabled(!title.isEmpty() && !description.isEmpty() &&
-                    !date.isEmpty() && !time.isEmpty());
-
-        }
-
-        @Override
-        public void afterTextChanged(Editable editable) {
-
-        }
-    };
-
-    //delete event
-    void confirmDialog(){
-        AlertDialog.Builder build = new AlertDialog.Builder(this);
-        build.setTitle("Delete " + title + "?");
-        build.setMessage("You want to delete? " + title + "?");
-        build.setPositiveButton("Yes", (dialogInterface, i) -> {
-            MainDatabase db = new MainDatabase(Update.this);
-            db.deleteOneRow(id);
-            finish();
-        });
-        build.setNegativeButton("No", (dialogInterface, i) -> {
-
-        });
-        build.create().show();
-
-    }
-
-    //setting data for the buttons and text
-
-    void getAndSetIntentData(){
-        if(getIntent().hasExtra("id") && getIntent().hasExtra("title") &&
-                getIntent().hasExtra("description") && getIntent().hasExtra("date") &&
-                getIntent().hasExtra("time")){
-
-            //gets data from intent
-            id = getIntent().getStringExtra("id");
-            int i = Integer.parseInt(id);
-            notificationC = (int)i;
-            date = getIntent().getStringExtra("date");
-            time = getIntent().getStringExtra("time");
-            title = getIntent().getStringExtra("title");
-            description = getIntent().getStringExtra("description");
-
-            //sets intent data
-            dateB.setText(date);
-            timeB.setText(time);
-            titleIN.setText(title);
-            descriptionIN.setText(description);
-
-        }else{
-            Toast.makeText(this, "Nothing to update", Toast.LENGTH_SHORT).show();
+            // Set data to views
+            titleInput.setText(title);
+            descriptionInput.setText(description);
+            dateButton.setText(date);
+            timeButton.setText(time);
+        } else {
+            Toast.makeText(this, "No data to update", Toast.LENGTH_SHORT).show();
         }
     }
 
-    //sets alarm and notifications
+    private void updateEvent() {
+        String updatedTitle = titleInput.getText().toString().trim();
+        String updatedDescription = descriptionInput.getText().toString().trim();
+        String updatedDate = dateButton.getText().toString().trim();
+        String updatedTime = timeButton.getText().toString().trim();
 
-    private void setAlarm(String date, String time,String text, String description) throws ParseException {
+        // Update database
+        db.updateData(id, updatedTitle, updatedDescription, updatedDate, updatedTime);
 
-        Intent intent = new Intent(Update.this,
-                Alarm.class);
-        intent.putExtra("event", text);
-        intent.putExtra("description", description);
-        intent.putExtra("time", date);
-        intent.putExtra("date", time);
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(Update.this,
-                notificationC,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
-
-        AlarmManager Manager = (AlarmManager) getSystemService(ALARM_SERVICE);
-
-        String dateTime = date + " " + alarm;
-        DateFormat format = new SimpleDateFormat("d-M-yyyy hh:mm");
-
-        Date dateToSet = null;
-
-        try{
-            dateToSet = format.parse(dateTime);
-            assert dateToSet != null;
-
-            Manager.set(AlarmManager.RTC_WAKEUP,
-                    dateToSet.getTime(),
-                    pendingIntent);
-            Toast.makeText(getApplicationContext(), "Alarm is set", Toast.LENGTH_SHORT).show();
-
+        // Set alarm
+        try {
+            reminderManager.setAlarm(new Reminder(updatedTitle, updatedDate, updatedDescription, updatedTime));
+            Toast.makeText(this, "Event updated and alarm set", Toast.LENGTH_SHORT).show();
         } catch (ParseException e) {
+            Toast.makeText(this, "Failed to set alarm", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
 
+        finish();
     }
 
-    //sets date and time
+    private void confirmDelete() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete " + title + "?")
+                .setMessage("Are you sure you want to delete " + title + "?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    db.deleteOneRow(id);
+                    finish();
+                })
+                .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+                .create()
+                .show();
+    }
+
+    private void validateInputs() {
+        String title = titleInput.getText().toString().trim();
+        String description = descriptionInput.getText().toString().trim();
+        String date = dateButton.getText().toString().trim();
+        String time = timeButton.getText().toString().trim();
+
+        updateButton.setEnabled(!title.isEmpty() && !description.isEmpty() &&
+                !date.isEmpty() && !time.isEmpty());
+    }
 
     private void selectTime() {
-        Calendar cal = Calendar.getInstance();
-        int hr = cal.get(Calendar.HOUR_OF_DAY);
-        int min = cal.get(Calendar.MINUTE);
-        TimePickerDialog PickerDialog = new TimePickerDialog(this, (timePicker, i, i1) -> {
-            alarm = i + ":" + i1;
-            timeB.setText(formatTime(i, i1));
-        }, hr, min, false);
-        PickerDialog.show();
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(this,
+                (view, selectedHour, selectedMinute) -> {
+                    time = String.format("%02d:%02d", selectedHour, selectedMinute);
+                    timeButton.setText(DateUtils.formatTime(selectedHour, selectedMinute));
+                }, hour, minute, false);
+        timePickerDialog.show();
     }
 
     private void selectDate() {
-        Calendar cal = Calendar.getInstance();
-        int Y = cal.get(Calendar.YEAR);
-        int M = cal.get(Calendar.MONTH);
-        int D = cal.get(Calendar.DAY_OF_MONTH);
-        DatePickerDialog PickerDialog = new DatePickerDialog(this, this::onDateSet, Y, M, D);
-        PickerDialog.show();
-    }
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
 
-    public String formatTime(int hr, int min) {
-
-        String T;
-        String RM;
-
-        if (min / 10 == 0) {
-            RM = "0" + min;
-        } else {
-            RM = "" + min;
-        }
-
-        if (hr == 0) {
-            time = "12" + ":" + RM + " AM";
-        } else if (hr < 12) {
-            time = hr + ":" + RM + " AM";
-        } else if (hr == 12) {
-            time = "12" + ":" + RM + " PM";
-        } else {
-            int temp = hr - 12;
-            time = temp + ":" + RM + " PM";
-        }
-        return time;
-    }
-
-    @SuppressLint("SetTextI18n")
-    private void onDateSet(DatePicker datePicker, int year, int month, int day) {
-        dateB.setText(String.format("%d-%d-%d", day, month + 1, year));
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this,
+                (view, selectedYear, selectedMonth, selectedDay) -> {
+                    date = String.format("%d-%d-%d", selectedDay, selectedMonth + 1, selectedYear);
+                    dateButton.setText(date);
+                }, year, month, day);
+        datePickerDialog.show();
     }
 }
