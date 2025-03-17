@@ -1,115 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@color/red"
-
-    android:id="@+id/mainLayout">
+    android:layout_margin="8dp"
+    android:orientation="vertical">
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="10dp"
-        android:layout_marginLeft="12dp"
-        android:layout_marginRight="12dp"
-        android:layout_marginTop="12dp">
-
+        android:layout_margin="8dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="12dp"
-            android:background="@color/white"
-            android:layout_gravity="center">
+            android:layout_height="wrap_content"
+            android:padding="16dp">
 
             <ImageView
                 android:id="@+id/cal_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:flow_verticalAlign="center"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@id/event_title"
-                app:tint="@color/gold"
-                tools:ignore="ContentDescription" />
-
-
-            <TextView
-                android:id="@+id/event_id"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/_id"
-                android:textColor="@color/black"
-                android:textSize="40sp"
-                android:textStyle="bold"
-                android:visibility="invisible"
-                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="8dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-
-
-                />
+                app:srcCompat="@drawable/ic_calendar"
+                app:tint="@color/gold" />
 
             <TextView
                 android:id="@+id/event_title"
-                android:layout_width="181dp"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:text="@string/row_title"
+                android:layout_marginStart="8dp"
+                android:text="Title"
                 android:textColor="@color/black"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/date_to_fire"
                 app:layout_constraintStart_toEndOf="@id/cal_icon"
-                app:layout_constraintTop_toTopOf="@id/cal_icon" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/event_description"
-                android:layout_width="309dp"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/row_description_of_event"
-                android:textAlignment="textStart"
+                android:layout_marginTop="8dp"
+                android:text="Description"
+                android:textColor="@color/black"
+                android:textSize="14sp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="@+id/event_title"
-                app:layout_constraintTop_toBottomOf="@+id/event_title" />
+                app:layout_constraintStart_toStartOf="@id/event_title"
+                app:layout_constraintTop_toBottomOf="@id/event_title" />
 
             <TextView
                 android:id="@+id/date_to_fire"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/row_date"
-                android:textSize="16sp"
-                app:layout_constraintEnd_toStartOf="@id/edit_button"
-                app:layout_constraintTop_toTopOf="@+id/event_title"
-
-                />
+                android:layout_marginEnd="8dp"
+                android:text="Date"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                app:layout_constraintEnd_toStartOf="@+id/edit_button"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/time_to_fire"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/row_time"
-                android:textSize="16sp"
-                app:layout_constraintEnd_toStartOf="@id/edit_button"
-                app:layout_constraintTop_toBottomOf="@+id/date_to_fire"
-
-                />
+                android:text="Time"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                app:layout_constraintEnd_toStartOf="@+id/edit_button"
+                app:layout_constraintTop_toBottomOf="@id/date_to_fire" />
 
             <ImageButton
                 android:id="@+id/edit_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:backgroundTint="#00ffffff"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_edit"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@id/date_to_fire"
-                app:tint="@color/rose"
-                tools:ignore="ContentDescription" />
-
-
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/rose" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 </LinearLayout>
