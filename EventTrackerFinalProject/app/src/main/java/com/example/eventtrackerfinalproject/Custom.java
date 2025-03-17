@@ -13,32 +13,27 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import static com.example.eventtrackerfinalproject.R.id.date_to_fire;
 
-public class Custom extends RecyclerView.Adapter<Custom.MyViewHolder>{
+public class Custom extends RecyclerView.Adapter<Custom.MyViewHolder> {
 
     private Context context;
-    private ArrayList e_id, e_title, e_description, e_date, e_time;
-    Activity act;
+    private ArrayList<Reminder> reminders;
+    private Activity activity;
+    private OnItemClickListener listener;
 
-
-    Custom(Activity activity, Context context,
-           ArrayList event_id,
-           ArrayList event_title,
-           ArrayList event_description,
-           ArrayList event_date,
-           ArrayList event_time){
-        this.act = activity;
-        this.context = context;
-        this.e_id = event_id;
-        this.e_title = event_title;
-        this.e_description = event_description;
-        this.e_date = event_date;
-        this.e_time = event_time;
-
+    // Interface for item click events
+    public interface OnItemClickListener {
+        void onItemClick(int position);
+        void onEditClick(int position);
     }
 
-    //fills rows and fills the home screen with the data
+    public Custom(Activity activity, Context context, ArrayList<Reminder> reminders, OnItemClickListener listener) {
+        this.activity = activity;
+        this.context = context;
+        this.reminders = reminders;
+        this.listener = listener;
+    }
+
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -48,49 +43,37 @@ public class Custom extends RecyclerView.Adapter<Custom.MyViewHolder>{
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MyViewHolder holder, final int pos) {
+    public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+        Reminder reminder = reminders.get(position);
 
-        holder.id.setText(String.valueOf(e_id.get(pos)));
-        holder.title.setText(String.valueOf(e_title.get(pos)));
-        holder.description.setText(String.valueOf(e_description.get(pos)));
-        holder.date.setText(String.valueOf(e_date.get(pos)));
-        holder.time.setText(String.valueOf(e_time.get(pos)));
+        holder.id.setText(String.valueOf(reminder.getId()));
+        holder.title.setText(reminder.getTitle());
+        holder.description.setText(reminder.getDescription());
+        holder.date.setText(reminder.getDate());
+        holder.time.setText(reminder.getTime());
 
-        holder.Layout.setOnClickListener((view) -> {
-
-        });
-        holder.itemView.findViewById(R.id.edit_button).setOnClickListener((view -> {
-            Intent intent = new Intent(context, Update.class);
-            intent.putExtra("id", String.valueOf(e_id.get(pos)));
-            intent.putExtra("title", String.valueOf(e_title.get(pos)));
-            intent.putExtra("description", String.valueOf(e_description.get(pos)));
-            intent.putExtra("date", String.valueOf(e_date.get(pos)));
-            intent.putExtra("time", String.valueOf(e_time.get(pos)));
-            act.startActivityForResult(intent, 1);
-        }));
-
+        // Set click listeners
+        holder.layout.setOnClickListener(v -> listener.onItemClick(position));
+        holder.itemView.findViewById(R.id.edit_button).setOnClickListener(v -> listener.onEditClick(position));
     }
 
     @Override
     public int getItemCount() {
-        return e_id.size();
+        return reminders.size();
     }
 
-    public class MyViewHolder extends RecyclerView.ViewHolder {
-
+    public static class MyViewHolder extends RecyclerView.ViewHolder {
         TextView id, title, description, date, time;
-        LinearLayout Layout;
+        LinearLayout layout;
 
-        public MyViewHolder(@NonNull View itemV) {
-            super(itemV);
+        public MyViewHolder(@NonNull View itemView) {
+            super(itemView);
             id = itemView.findViewById(R.id.event_id);
             title = itemView.findViewById(R.id.event_title);
             description = itemView.findViewById(R.id.event_description);
-            date = itemView.findViewById(date_to_fire);
+            date = itemView.findViewById(R.id.date_to_fire);
             time = itemView.findViewById(R.id.time_to_fire);
-            Layout = itemView.findViewById((R.id.mainLayout));
-
+            layout = itemView.findViewById(R.id.mainLayout);
         }
     }
-
 }
