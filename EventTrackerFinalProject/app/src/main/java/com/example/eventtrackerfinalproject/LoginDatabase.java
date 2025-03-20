@@ -18,7 +18,7 @@ public class LoginDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        //This is creating a table that will have users and passwords
+        // Create a table that will have users and passwords
         db.execSQL("create Table users(username TEXT primary key, password TEXT)");
     }
 
@@ -28,7 +28,7 @@ public class LoginDatabase extends SQLiteOpenHelper {
     }
 
 
-    //For adding new users and passwords
+    // Add new users and passwords
     public Boolean insertData(String user, String pass){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues Values = new ContentValues();
@@ -41,10 +41,10 @@ public class LoginDatabase extends SQLiteOpenHelper {
 
     }
 
-    //looking for existing username
+    // Look for existing username
     public Boolean checkUsername(String user){
         SQLiteDatabase db = this.getWritableDatabase();
-        //checking database fo the username
+        // Check database fo the username
         Cursor cursor = db.rawQuery("Select * from users where username = ?", new String[] {user});
         if(cursor.getCount() > 0)
             return true;
@@ -52,7 +52,7 @@ public class LoginDatabase extends SQLiteOpenHelper {
             return false;
     }
 
-    //Looking to see if the username and password are both correct
+    // Look to see if the username and password are both correct
     public Boolean checkUsernamePassword(String user, String pass){
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery("Select * from users where username = ? and password = ?", new String[] {user, pass});
