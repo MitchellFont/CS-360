@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Custom extends RecyclerView.Adapter<Custom.MyViewHolder> {
 
@@ -27,11 +28,16 @@ public class Custom extends RecyclerView.Adapter<Custom.MyViewHolder> {
         void onEditClick(int position);
     }
 
-    public Custom(Activity activity, Context context, ArrayList<Reminder> reminders, OnItemClickListener listener) {
+    public Custom(Activity activity, Context context, List<Reminder> reminders, OnItemClickListener listener) {
         this.activity = activity;
         this.context = context;
-        this.reminders = reminders;
+        this.reminders = new ArrayList<>(reminders);
         this.listener = listener;
+    }
+
+    public void updateData(List<Reminder> newReminders) {
+        this.reminders = new ArrayList<>(newReminders);
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -45,16 +51,7 @@ public class Custom extends RecyclerView.Adapter<Custom.MyViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         Reminder reminder = reminders.get(position);
-
-        holder.id.setText(String.valueOf(reminder.getId()));
-        holder.title.setText(reminder.getTitle());
-        holder.description.setText(reminder.getDescription());
-        holder.date.setText(reminder.getDate());
-        holder.time.setText(reminder.getTime());
-
-        // Set click listeners
-        holder.layout.setOnClickListener(v -> listener.onItemClick(position));
-        holder.itemView.findViewById(R.id.edit_button).setOnClickListener(v -> listener.onEditClick(position));
+        holder.bind(reminder, listener);
     }
 
     @Override
@@ -74,6 +71,18 @@ public class Custom extends RecyclerView.Adapter<Custom.MyViewHolder> {
             date = itemView.findViewById(R.id.date_to_fire);
             time = itemView.findViewById(R.id.time_to_fire);
             layout = itemView.findViewById(R.id.mainLayout);
+        }
+
+        public void bind(Reminder reminder, OnItemClickListener listener) {
+            id.setText(String.valueOf(reminder.getId()));
+            title.setText(reminder.getTitle());
+            description.setText(reminder.getDescription());
+            date.setText(reminder.getDate());
+            time.setText(reminder.getTime());
+
+            layout.setOnClickListener(v -> listener.onItemClick(getAdapterPosition()));
+            itemView.findViewById(R.id.edit_button).setOnClickListener(v -> 
+                listener.onEditClick(getAdapterPosition()));
         }
     }
 }
