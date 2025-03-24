@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -68,12 +67,11 @@ public class Update extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable editable) {}
+            public void afterTextChanged(Editable s) {}
         };
+        
         titleInput.addTextChangedListener(textWatcher);
         descriptionInput.addTextChangedListener(textWatcher);
-        dateButton.addTextChangedListener(textWatcher);
-        timeButton.addTextChangedListener(textWatcher);
 
         // Update event
         updateButton.setOnClickListener(v -> updateEvent());
@@ -116,8 +114,9 @@ public class Update extends AppCompatActivity {
 
         // Set alarm
         try {
-            reminderManager.setAlarm(new Reminder(updatedTitle, updatedDate, updatedDescription, updatedTime));
-            Toast.makeText(this, "Event updated and alarm set", Toast.LENGTH_SHORT).show();
+            reminderManager.addToQueue(new Reminder(id, updatedTitle, updatedDate, updatedDescription, updatedTime));
+            reminderManager.processNextReminder();
+            Toast.makeText(this, "Event updated", Toast.LENGTH_SHORT).show();
         } catch (ParseException e) {
             Toast.makeText(this, "Failed to set alarm", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
