@@ -68,10 +68,12 @@ public class Add extends AppCompatActivity {
         );
 
         long notificationId = database.addReminder(reminder);
+        reminder.setId(String.valueOf(notificationId));
 
         if (permissionManager.hasSmsPermission()) {
             try {
-                reminderManager.setAlarm(reminder);
+                reminderManager.addToQueue(reminder);
+                reminderManager.processNextReminder();
             } catch (ParseException e) {
                 Toast.makeText(this, "Failed to set alarm", Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
