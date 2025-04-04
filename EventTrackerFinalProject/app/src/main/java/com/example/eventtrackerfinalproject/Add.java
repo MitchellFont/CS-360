@@ -22,7 +22,7 @@ public class Add extends AppCompatActivity {
     private EditText titleInput, descriptionInput;
     private ReminderManager reminderManager;
     private PermissionManager permissionManager;
-    private MainDatabase database;
+    private MainDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +33,7 @@ public class Add extends AppCompatActivity {
         initViews();
         reminderManager = new ReminderManager(this);
         permissionManager = new PermissionManager(this);
-        database = new MainDatabase(this);
+        db = new MainDatabase(this);
 
         // Set listeners
         setListeners();
@@ -67,22 +67,39 @@ public class Add extends AppCompatActivity {
                 timeButton.getText().toString().trim()
         );
 
-        long notificationId = database.addReminder(reminder);
-        reminder.setId(String.valueOf(notificationId));
-
-        if (permissionManager.hasSmsPermission()) {
-            try {
-                reminderManager.addToQueue(reminder);
-                reminderManager.processNextReminder();
-            } catch (ParseException e) {
-                Toast.makeText(this, "Failed to set alarm", Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
+        db.addReminder(reminder, new MainDatabase.DatabaseOperationCallback() {
+            @Override
+            public void onSuccess(long notificationId) {
+                reminder.setId(String.valueOf(notificationId));
+                
+                if (permissionManager.hasSmsPermission()) {
+                    try {
+                        reminderManager.addToQueue(reminder);
+                        reminderManager.processNextReminder();
+                        runOnUiThread(() -> {
+                            Toast.makeText(Add.this, "Event added", Toast.LENGTH_SHORT).show();
+                            finish();
+                        });
+                    } catch (ParseException e) {
+                        runOnUiThread(() -> {
+                            Toast.makeText(Add.this, "Failed to set alarm", Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                        });
+                    }
+                } else {
+                    runOnUiThread(() -> {
+                        Toast.makeText(Add.this, "Event added (no reminders)", Toast.LENGTH_SHORT).show();
+                        finish();
+                    });
+                }
             }
-        } else {
-            Toast.makeText(this, "Permission required for this feature", Toast.LENGTH_SHORT).show();
-        }
 
-        finish();
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> 
+                    Toast.makeText(Add.this, "Failed to add event: " + error, Toast.LENGTH_SHORT).show());
+            }
+        });
     }
 
     private void selectDate() {
