@@ -12,7 +12,7 @@ public class Constants {
     public static final int REQUEST_CODE_UPDATE = 2;
 
     // Database constants
-    public static final String DB_URL = "jdbc:postgresql://your-server:5432/event_tracker";
-    public static final String DB_USER = "admin";
+    public static final String DB_URL = "jdbc:postgresql://localhost:5432/postgres";
+    public static final String DB_USER = "postgres";
     public static final String DB_PASSWORD = "password";
 }
