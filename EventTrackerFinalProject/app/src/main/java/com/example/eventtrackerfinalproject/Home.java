@@ -3,6 +3,8 @@ package com.example.eventtrackerfinalproject;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -55,34 +57,65 @@ public class Home extends AppCompatActivity implements Custom.OnItemClickListene
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == Constants.REQUEST_CODE_ADD) {
-            recreate(); // Refresh the activity
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_analytics) {
+            showAnalytics();
+            return true;
         }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showAnalytics() {
+        db.getEventAnalytics(new MainDatabase.AnalyticsCallback() {
+            @Override
+            public void onSuccess(List<MainDatabase.AnalyticsData> analytics, List<MainDatabase.ActionCount> actions) {
+                StringBuilder message = new StringBuilder("Event Analytics:\n");
+                for (MainDatabase.AnalyticsData data : analytics) {
+                    message.append(data.eventTitle).append(": ").append(data.views).append(" views\n");
+                }
+                message.append("\nCommon Actions:\n");
+                for (MainDatabase.ActionCount action : actions) {
+                    message.append(action.action).append(": ").append(action.count).append("\n");
+                }
+                
+                runOnUiThread(() -> {
+                    new AlertDialog.Builder(Home.this)
+                            .setTitle("Event Analytics")
+                            .setMessage(message.toString())
+                            .setPositiveButton("OK", null)
+                            .show();
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> 
+                    Toast.makeText(Home.this, "Failed to load analytics", Toast.LENGTH_SHORT).show());
+            }
+        });
     }
 
     private void loadData() {
-        reminders.clear();
-        reminderMap.clear();
-        
-        Cursor cursor = db.readAllData();
-        if (cursor.getCount() == 0) {
-            Toast.makeText(this, "No events found", Toast.LENGTH_SHORT).show();
-        } else {
-            while (cursor.moveToNext()) {
-                Reminder reminder = new Reminder(
-                        cursor.getString(0),
-                        cursor.getString(1),
-                        cursor.getString(2),
-                        cursor.getString(3),
-                        cursor.getString(4)
-                );
-                reminders.add(reminder);
-                reminderMap.put(reminder.getId(), reminder);
+        db.getAllReminders(new MainDatabase.ReminderListCallback() {
+            @Override
+            public void onSuccess(List<Reminder> reminderList) {
+                reminders.clear();
+                reminders.addAll(reminderList);
+                runOnUiThread(() -> adapter.updateData(reminders));
             }
-            sortReminders();
-        }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> 
+                    Toast.makeText(Home.this, "Failed to load events", Toast.LENGTH_SHORT).show());
+            }
+        });
     }
 
     private void sortReminders() {
@@ -113,12 +146,17 @@ public class Home extends AppCompatActivity implements Custom.OnItemClickListene
 
     @Override
     public void onItemClick(int position) {
-        // Handle item click if needed
+        Reminder reminder = reminders.get(position);
+        db.logEventAction(reminder.getId(), "view");
+        // Show details if needed
     }
+
 
     @Override
     public void onEditClick(int position) {
         Reminder reminder = reminders.get(position);
+        db.logEventAction(reminder.getId(), "edit");
+        
         Intent intent = new Intent(this, Update.class);
         intent.putExtra(Constants.EXTRA_ID, reminder.getId());
         intent.putExtra(Constants.EXTRA_TITLE, reminder.getTitle());
